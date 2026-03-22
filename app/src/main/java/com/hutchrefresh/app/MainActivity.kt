@@ -10,14 +10,13 @@ import android.widget.SeekBar
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     private var isOn = false
     private var isDark = false
     private var refreshCount = 0
-    private var intervalMin = 5
+    private var intervalSeconds = 10 // default 10 seconds minimum
     private var countDownTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +39,21 @@ class MainActivity : AppCompatActivity() {
         val outerRing = findViewById<android.view.View>(R.id.outerRing)
         val logoText = findViewById<TextView>(R.id.logoText)
 
+        // Slider: 0-based, each step = 10 seconds, min=10s, max=600s (10 mins)
+        // progress 0 = 10sec, progress 1 = 20sec ... progress 59 = 600sec
+        intervalSlider.max = 59
+        intervalSlider.progress = 0 // starts at 10 seconds
+
+        fun formatTime(seconds: Int): String {
+            return if (seconds < 60) "${seconds}s"
+            else if (seconds % 60 == 0) "${seconds / 60} min"
+            else "${seconds / 60}m ${seconds % 60}s"
+        }
+
+        // Set initial labels
+        intervalText.text = "10s"
+        intervalLabel.text = "Refresh interval: 10 seconds"
+
         themeToggle.setOnClickListener {
             isDark = !isDark
             if (isDark) {
@@ -53,8 +67,8 @@ class MainActivity : AppCompatActivity() {
 
         intervalSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                intervalMin = progress + 1
-                val label = if (intervalMin < 60) "$intervalMin min" else "1 hr"
+                intervalSeconds = (progress + 1) * 10 // 10, 20, 30 ... 600
+                val label = formatTime(intervalSeconds)
                 intervalText.text = label
                 intervalLabel.text = "Refresh interval: $label"
             }
@@ -62,7 +76,7 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 if (isOn) {
                     restartTimer(nextRefreshText, refreshCountText, logText)
-                    addLog(logText, "[config] Interval changed to $intervalMin min")
+                    addLog(logText, "[config] Interval changed to ${formatTime(intervalSeconds)}")
                 }
             }
         })
@@ -100,13 +114,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun formatTime(seconds: Int): String {
+        return if (seconds < 60) "${seconds}s"
+        else if (seconds % 60 == 0) "${seconds / 60} min"
+        else "${seconds / 60}m ${seconds % 60}s"
+    }
+
     private fun restartTimer(next: TextView, count: TextView, log: TextView) {
         countDownTimer?.cancel()
-        countDownTimer = object : CountDownTimer(intervalMin * 60 * 1000L, 1000) {
+        countDownTimer = object : CountDownTimer(intervalSeconds * 1000L, 1000) {
             override fun onTick(ms: Long) {
-                val m = ms / 60000
-                val s = (ms % 60000) / 1000
-                next.text = "$m:${s.toString().padStart(2, '0')}"
+                val s = ms / 1000
+                if (s < 60) {
+                    next.text = "${s}s"
+                } else {
+                    next.text = "${s / 60}:${(s % 60).toString().padStart(2, '0')}"
+                }
             }
             override fun onFinish() {
                 refreshCount++
