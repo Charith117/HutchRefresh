@@ -17,7 +17,7 @@ class RefreshService : Service() {
     companion object {
         const val CHANNEL_ID = "HutchRefreshChannel"
         const val NOTIFICATION_ID = 1
-        const val INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
+        const val INTERVAL_MS = 10 * 1000L // 10 seconds minimum
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
