@@ -85,8 +85,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:orientation="vertical"
-                        android:gravity="center"
-                        android:gap="8dp">
+                        android:gravity="center">
 
                         <ImageView
                             android:id="@+id/powerIcon"
